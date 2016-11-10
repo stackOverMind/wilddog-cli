@@ -2,16 +2,14 @@
 
 ## TODO
 
-wilddog init <configFile>
-
-wilddog data --set <data> --path <path>
-wilddog data --push <data> --path <path>
-wilddog data --update <data> --path <path>
-wilddog data --remove <data> --path <path>
-wilddog data --listen --path <path>
-wilddog test --set <data> --path <path> --authToken
-
-wilddog deploy --conf <file>
+* wilddog init <configFile>
+* wilddog data --set <data> --path <path>
+* wilddog data --push <data> --path <path>
+* wilddog data --update <data> --path <path>
+* wilddog data --remove <data> --path <path>
+* wilddog data --listen --path <path>
+* wilddog test --set <data> --path <path> --authToken
+* wilddog deploy --conf <file>
 
 `wilddog.json`
 
