@@ -1,0 +1,28 @@
+{
+  "name": "wilddog-cli",
+  "version": "0.0.1",
+  "description": "wilddog client tool",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stackOverMind/wilddog-cli.git"
+  },
+  "bin":{
+    "wilddog":"src/index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/stackOverMind/wilddog-cli/issues"
+  },
+  "homepage": "https://github.com/stackOverMind/wilddog-cli#readme",
+  "dependencies": {
+    "co": "^4.6.0",
+    "co-prompt": "^1.0.0",
+    "commander": "^2.9.0",
+    "wilddog": "^2.3.0"
+  }
+}
