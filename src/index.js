@@ -6,36 +6,91 @@ var wilddog = require('wilddog')
 var main = function () {
     program
         .version('0.0.1')
-        .option('--token <token>')
+        .option('--token <token>', 'use a token to login')
 
         .command('set [appid] [path] [data]')
+        .option('--priority <priority>', 'set with a priority')
+
         .description('set data to the target path')
         .action(function (appid, path, data, options) {
-
+            assertAppId(appid)
+            var token = options.token
+            if (options.priority != null) {
+                var _d = { '.value': tryParse(data), '.priority': tryParse(options.priority) }
+                opData(appid, token, path, tryParse(data), 'setWithPriority', function (err) {
+                    if (err) {
+                        console.error(err)
+                    }
+                    else {
+                        console.log('success')
+                    }
+                    process.exit(0)
+                })
+            }
+            else {
+                opData(appid, token, path, tryParse(data), 'set', function (err) {
+                    if (err) {
+                        console.error(err)
+                    }
+                    else {
+                        console.log('success')
+                    }
+                    process.exit(0)
+                })
+            }
         })
     program
         .command('update [appid] [path] [data]')
         .description('merge data to the target path')
         .action(function (appid, path, data, options) {
-            console.log(appid)
-            console.log(path)
-            console.log(options)
+            assertAppId(appid)
+            var token = options.token
+            opData(appid, token, path, tryParse(data), 'update', function (err) {
+                if (err) {
+                    console.error(err)
+                }
+                else {
+                    console.log('success')
+                }
+                process.exit(0)
+
+            })
         })
     program
         .command('push [appid] [path] [data]')
         .description('add one child with an automate generated key')
         .action(function (appid, path, data, options) {
-            console.log(appid)
-            console.log(path)
-            console.log(data)
+            assertAppId(appid)
+            var token = options.token
+            opData(appid, token, path, tryParse(data), 'push', function (err, newRef) {
+                if (err) {
+                    console.error(err)
+                }
+                else {
+                    console.log('new reference:')
+                    console.log(newRef.toString())
+                    console.log('success')
+                }
+                process.exit(0)
+
+            })
         })
     program
         .command('remove [appid] [path]')
         .description('remove data')
         .action(function (appid, path, options) {
-            console.log(appid)
-            console.log(path)
-            console.log(data)
+            assertAppId(appid)
+            var token = options.token
+            opData(appid, token, path,null, 'remove', function (err) {
+                if (err) {
+                    console.error(err)
+                }
+                else {
+                    console.log('success')
+                }
+                process.exit(0)
+
+            })
         })
     program
         .command('query [appid] [path]')
@@ -51,7 +106,7 @@ var main = function () {
         .option('--limitToLast <number>', 'limit to last')
 
         .action(function (appid, path, options) {
-
+            assertAppId(appid)
             var token = options.token
             query(appid, token, path, options, function (err, snapshot) {
                 if (err) {
@@ -96,6 +151,43 @@ var initApp = function (appid, token, cb) {
     }
 }
 
+var opData = function (appid, token, path, data, op, cb) {
+    initApp(appid, token, function (err, app) {
+        if (err) {
+            cb(err)
+        }
+        else {
+            var ref = app.sync().ref(path);
+            switch (op) {
+                case 'set':
+                    ref.set(data, function (err) {
+                        cb(err)
+                    })
+                    break;
+                case 'push':
+                    var ref2 = ref.push(data, function (err) {
+                        cb(err, ref2)
+                    })
+                    break;
+                case 'update':
+                    ref.update(data, function (err) {
+                        cb(err)
+                    })
+                    break;
+                case 'remove':
+                    ref.remove(function (err) {
+                        cb(err)
+                    })
+                    break;
+                case 'setWithPriority':
+                    ref.setWithPriority(data,function(err){
+                        cb(err)
+                    })
+                    break;
+            }
+        }
+    })
+}
 var query = function (appid, token, path, options, cb) {
     initApp(appid, token, function (err, app) {
         if (err) {
@@ -125,7 +217,8 @@ var query = function (appid, token, path, options, cb) {
 var showSnapshot = function (snapshot) {
     var key = snapshot.key();
     var value = snapshot.val();
-    console.log(JSON.stringify(value, null, 2))
+    console.log('key:',key)
+    console.log('value:',JSON.stringify(value, null, 2))
 }
 /**以乐观的方式解析 */
 var tryParse = function (str) {
@@ -180,5 +273,11 @@ var parseEventType = function (options) {
         }
     }
     return e;
+}
+var assertAppId = function (appId) {
+    if (appId == null) {
+        console.error('no appId provided')
+        process.exit(0)
+    }
 }
 main()
