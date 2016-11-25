@@ -4,14 +4,14 @@
   "description": "wilddog client tool",
   "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": " ./node_modules/mocha/bin/mocha"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/stackOverMind/wilddog-cli.git"
   },
-  "bin":{
-    "wilddog":"src/index.js"
+  "bin": {
+    "wilddog": "src/index.js"
   },
   "author": "",
   "license": "ISC",
@@ -23,6 +23,13 @@
     "co": "^4.6.0",
     "co-prompt": "^1.0.0",
     "commander": "^2.9.0",
-    "wilddog": "^2.3.0"
+    "esprima": "^3.1.2",
+    "estraverse": "^4.2.0",
+    "wilddog": "^2.3.0",
+    "wilddog-token-generator": "^2.1.0"
+  },
+  "devDependencies": {
+    "assert": "^1.4.1",
+    "mocha": "^3.1.2"
   }
 }

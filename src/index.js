@@ -3,6 +3,8 @@ var program = require('commander');
 var co = require('co');
 var prompt = require('co-prompt');
 var wilddog = require('wilddog')
+var manager = require('./manager')
+var fs = require('fs')
 var main = function () {
     program
         .version('0.0.1')
@@ -81,7 +83,7 @@ var main = function () {
         .action(function (appid, path, options) {
             assertAppId(appid)
             var token = options.token
-            opData(appid, token, path,null, 'remove', function (err) {
+            opData(appid, token, path, null, 'remove', function (err) {
                 if (err) {
                     console.error(err)
                 }
@@ -116,8 +118,53 @@ var main = function () {
                 showSnapshot(snapshot)
             })
         })
-
-
+    program
+        .command('rules [appid]')
+        .option('--secret <secret>', 'secret')
+        .option('--set <file>', 'set rule with a json file')
+        .action(function (appid, options) {
+            if (appid == null) {
+                program.outputHelp('rules')
+                return;
+            }
+            if (!options.secret || typeof options.secret != 'string' || options.secret.length < 40) {
+                console.log("secret required: --secret <secret>")
+                return;
+            }
+            var secret = options.secret
+            var token = manager.generateToken(secret)
+            if (options.set == null) {
+                manager.getRule(appid, token, (err, data) => {
+                    if (err) {
+                        console.log(err)
+                    }
+                    else {
+                        console.log(JSON.stringify(data, null, 4))
+                    }
+                })
+            }
+            else {
+                var filePath = options.set
+                fs.readFile(filePath, (err, data) => {
+                    if (err) throw err;
+                    var newRule = null;
+                    try {
+                        newRule = JSON.parse(data.toString())
+                    }
+                    catch (e) {
+                        throw e
+                    }
+                    manager.setRule(appid, token, newRule, function (err) {
+                        if(err){
+                            console.log(err)
+                        }
+                        else{
+                            console.log('success')
+                        }
+                    })
+                });
+            }
+        })
     program.on('--help', function () {
         console.log('wilddog doc: https://docs.wilddog.com');
         console.log('github: https://github.com/stackOverMind/wilddog-cli');
@@ -180,7 +227,7 @@ var opData = function (appid, token, path, data, op, cb) {
                     })
                     break;
                 case 'setWithPriority':
-                    ref.setWithPriority(data,function(err){
+                    ref.setWithPriority(data, function (err) {
                         cb(err)
                     })
                     break;
@@ -217,8 +264,8 @@ var query = function (appid, token, path, options, cb) {
 var showSnapshot = function (snapshot) {
     var key = snapshot.key();
     var value = snapshot.val();
-    console.log('key:',key)
-    console.log('value:',JSON.stringify(value, null, 2))
+    console.log('key:', key)
+    console.log('value:', JSON.stringify(value, null, 2))
 }
 /**以乐观的方式解析 */
 var tryParse = function (str) {
@@ -230,40 +277,41 @@ var tryParse = function (str) {
     return res;
 }
 var parseOrder = function (ref, options) {
-
+    var _ref = ref
     if (options.orderByChild != null) {
-        console.log(options.orderByChild)
-
-        ref = ref.orderByChild(options.orderByChild)
+        _ref = ref.orderByChild(options.orderByChild)
     }
     else if (options.orderByKey) {
-        ref = ref.orderByKey()
+        _ref = ref.orderByKey()
     }
     else if (options.orderByValue) {
-        ref = ref.orderByValue()
+        _ref = ref.orderByValue()
     }
-    return ref
+    return _ref
 }
 var parsePosition = function (ref, options) {
+    var _ref = ref;
     if (options.startAt) {
-        ref = ref.startAt(tryParse(options.startAt))
+        _ref = ref.startAt(tryParse(options.startAt))
     }
     else if (options.endAt) {
-        ref = ref.endAt(tryParse(options.endAt))
+        _ref = ref.endAt(tryParse(options.endAt))
     }
     else if (options.equalTo) {
-        ref = ref.equalTo(tryParse(options.equalTo))
+
+        _ref = ref.equalTo(tryParse(options.equalTo))
     }
-    return ref
+    return _ref
 }
 var parseLimit = function (ref, options) {
+    var _ref = ref
     if (options.limitToFirst) {
-        ref = ref.limitToFirst(tryParse(options.limitToFirst))
+        _ref = ref.limitToFirst(tryParse(options.limitToFirst))
     }
     else if (options.limitToLast) {
-        ref = ref.limitToLast(tryParse(options.limitToLast))
+        _ref = ref.limitToLast(tryParse(options.limitToLast))
     }
-    return ref
+    return _ref
 }
 var parseEventType = function (options) {
     var e = 'value'
