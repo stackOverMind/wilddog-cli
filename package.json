@@ -1,6 +1,6 @@
 {
   "name": "wilddog-cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "wilddog client tool",
   "main": "src/index.js",
   "scripts": {
@@ -25,7 +25,7 @@
     "commander": "^2.9.0",
     "esprima": "^3.1.2",
     "estraverse": "^4.2.0",
-    "wilddog": "^2.3.0",
+    "wilddog": "^2.3.8",
     "wilddog-token-generator": "^2.1.0"
   },
   "devDependencies": {
