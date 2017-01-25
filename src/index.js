@@ -8,7 +8,9 @@ var fs = require('fs')
 var main = function () {
     program
         .version('0.0.1')
-        .option('--token <token>', 'use a token to login')
+        .option('--token <token>', 'use a custom token to login')
+        .option('--email <email>', 'use email-passowrd to login')
+        .option('--password <password>', 'use email-passowrd to login')
 
         .command('set [appid] [path] [data]')
         .option('--priority <priority>', 'set with a priority')
@@ -16,28 +18,30 @@ var main = function () {
         .description('set data to the target path')
         .action(function (appid, path, data, options) {
             assertAppId(appid)
-            var token = options.token
+            var token = options.parent.token
             if (options.priority != null) {
                 var _d = { '.value': tryParse(data), '.priority': tryParse(options.priority) }
-                opData(appid, token, path, tryParse(data), 'setWithPriority', function (err) {
+                opData(appid, token, options.parent.email, options.parent.password, path, _d, 'setWithPriority', function (err) {
                     if (err) {
                         console.error(err)
+                        process.exit(1)
                     }
                     else {
                         console.log('success')
+                        process.exit(0)
                     }
-                    process.exit(0)
                 })
             }
             else {
-                opData(appid, token, path, tryParse(data), 'set', function (err) {
+                opData(appid, token, options.parent.email, options.parent.password, path, tryParse(data), 'set', function (err) {
                     if (err) {
                         console.error(err)
+                        process.exit(1)
                     }
                     else {
                         console.log('success')
+                        process.exit(0)
                     }
-                    process.exit(0)
                 })
             }
         })
@@ -46,8 +50,8 @@ var main = function () {
         .description('merge data to the target path')
         .action(function (appid, path, data, options) {
             assertAppId(appid)
-            var token = options.token
-            opData(appid, token, path, tryParse(data), 'update', function (err) {
+            var token = options.parent.token
+            opData(appid, token, options.parent.email, options.parent.password, path, tryParse(data), 'update', function (err) {
                 if (err) {
                     console.error(err)
                 }
@@ -63,8 +67,8 @@ var main = function () {
         .description('add one child with an automate generated key')
         .action(function (appid, path, data, options) {
             assertAppId(appid)
-            var token = options.token
-            opData(appid, token, path, tryParse(data), 'push', function (err, newRef) {
+            var token = options.parent.token
+            opData(appid, token, options.parent.email, options.parent.password, path, tryParse(data), 'push', function (err, newRef) {
                 if (err) {
                     console.error(err)
                 }
@@ -82,8 +86,8 @@ var main = function () {
         .description('remove data')
         .action(function (appid, path, options) {
             assertAppId(appid)
-            var token = options.token
-            opData(appid, token, path, null, 'remove', function (err) {
+            var token = options.parent.token
+            opData(appid, token, options.parent.email, options.parent.password, path, null, 'remove', function (err) {
                 if (err) {
                     console.error(err)
                 }
@@ -109,8 +113,8 @@ var main = function () {
 
         .action(function (appid, path, options) {
             assertAppId(appid)
-            var token = options.token
-            query(appid, token, path, options, function (err, snapshot) {
+            var token = options.parent.token
+            query(appid, token, options.parent.email, options.parent.password, path, options, function (err, snapshot) {
                 if (err) {
                     console.error(err)
                     process.exit(0)
@@ -178,7 +182,7 @@ var main = function () {
 }
 
 
-var initApp = function (appid, token, cb) {
+var initApp = function (appid, token, email, password, cb) {
     var app = wilddog.initializeApp({
         "syncURL": "https://" + appid + '.wilddogio.com',
         "authDomain": appid + '.wilddog.com'
@@ -192,14 +196,24 @@ var initApp = function (appid, token, cb) {
                 cb(null, app)
             }
         })
-    }
+    } 
+    else if (email != null && password != null) {
+        app.auth().signInWithEmailAndPassword(email, password, function (err, user) {
+            if (err) {
+                cb(err)
+            }
+            else {
+                cb(null, app)
+            }
+        })
+    } 
     else {
         cb(null, app)
     }
 }
 
-var opData = function (appid, token, path, data, op, cb) {
-    initApp(appid, token, function (err, app) {
+var opData = function (appid, token, email, password, path, data, op, cb) {
+    initApp(appid, token, email, password, function (err, app) {
         if (err) {
             cb(err)
         }
@@ -227,7 +241,7 @@ var opData = function (appid, token, path, data, op, cb) {
                     })
                     break;
                 case 'setWithPriority':
-                    ref.setWithPriority(data, function (err) {
+                    ref.setWithPriority(data[".value"], data[".priority"], function (err) {
                         cb(err)
                     })
                     break;
@@ -235,8 +249,8 @@ var opData = function (appid, token, path, data, op, cb) {
         }
     })
 }
-var query = function (appid, token, path, options, cb) {
-    initApp(appid, token, function (err, app) {
+var query = function (appid, token, email, password, path, options, cb) {
+    initApp(appid, token, email, password, function (err, app) {
         if (err) {
             cb(err)
         }
